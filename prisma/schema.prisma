@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum FileStatus {
+  CREATED
+  PENDING
+  ERROR
+  DONE
+}
+
+enum FileType {
+  UNKNOWN
+  IMAGE
+}
+
+model File {
+  id                        String                  @id @default(uuid())
+  status                    FileStatus              @default(CREATED)
+  type                      FileType                @default(UNKNOWN)
+  name                      String?
+  size                      Int
+  mimeType                  String
+  width                     Int                     @default(0)
+  height                    Int                     @default(0)
+  blurDataUrl               String?
+  path                      String?
+  usersAvatar128x128        User[]                  @relation(name: "userAvatar128x128")
+  createdAt                 DateTime                @default(now())
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+model User {
+  id                        Int                     @id @default(autoincrement())
+  role                      UserRole                @default(USER)
+  login                     String                  @unique
+  name                      String?
+  hashedPassword            String
+  avatar128x128Id           String?
+  avatar128x128             File?                   @relation(name: "userAvatar128x128", fields: [avatar128x128Id], references: [id], onDelete: SetNull)
+  banned                    Boolean                 @default(false)
+  createdAt                 DateTime                @default(now())
+
+  @@index([login], type: Hash)
+}

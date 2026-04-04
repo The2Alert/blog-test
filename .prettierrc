@@ -1,0 +1,23 @@
+{
+  "tabWidth": 2,
+  "printWidth": 80,
+  "trailingComma": "none",
+  "singleQuote": true,
+  "importOrder": [
+    "express",
+    "@prisma/client",
+    "<THIRD_PARTY_MODULES>",
+    "^@/(.*)$",
+    "^[./]"
+  ],
+  "importOrderSortSpecifiers": true,
+  "endOfLine": "auto",
+  "plugins": [
+    "@trivago/prettier-plugin-sort-imports"
+  ],
+  "importOrderParserPlugins": [
+    "typescript",
+    "decorators-legacy"
+  ],
+  "parser": "typescript"
+}

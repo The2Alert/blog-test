@@ -1,0 +1,28 @@
+logs:
+  level: debug
+
+http:
+  host: 127.0.0.1
+  port: 8000
+  baseUrl: http://localhost:8000
+
+postgres:
+  user: postgres
+  password: '123'
+  db: dev
+  host: 127.0.0.1
+  port: 5432
+
+redis:
+  user: default
+  password: ''
+  host: 127.0.0.1
+  port: 6379
+
+admin:
+  id: 0
+  login: admin
+  password: qwerty123
+
+jwt:
+  secret: a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3

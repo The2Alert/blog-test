@@ -1,0 +1,27 @@
+services:
+  blog_test_redis:
+    container_name: blog_test_redis
+    image: redis:7.2
+    ports:
+      - 127.0.0.1:6379:6379
+    env_file:
+      - .env
+    volumes:
+      - blog_test_redis_data:/data
+    command: redis-server
+    restart: always
+
+  blog_test_postgres:
+    container_name: blog_test_postgres
+    image: postgres:13
+    ports:
+      - 127.0.0.1:5432:5432
+    env_file:
+      - .env
+    volumes:
+      - blog_test_postgres_data:/var/lib/postgresql/data/pgdata
+    restart: always
+
+volumes:
+  blog_test_redis_data:
+  blog_test_postgres_data:
