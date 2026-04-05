@@ -22,6 +22,6 @@ export const UnbanService: ServiceFunction<UnbanParams, void> = async (
 
   await repository.user.update({
     where: { id: user.id },
-    data: { banned: false }
+    data: { banned: false, banReason: null }
   });
 };

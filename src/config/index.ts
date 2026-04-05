@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const configSchema = z.object({
-  logs: z
+  logger: z
     .object({
       level: z.enum(['debug', 'info', 'error'])
     })

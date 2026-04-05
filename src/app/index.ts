@@ -16,7 +16,7 @@ export class App {
     return new App(params);
   }
 
-  constructor(private readonly params: AppParams) {}
+  constructor(private readonly params: AppParams = {}) {}
 
   private readonly name = 'Blog Test';
   private readonly package = require('../../package.json');
@@ -63,20 +63,22 @@ export class App {
     return this.params.multiProcessMode ?? false;
   }
 
-  private readonly info: AppInfo = {
-    name: this.name,
-    version: this.version,
-    color: this.color,
-    mode: this.mode,
-    prodMode: this.prodMode,
-    devMode: this.devMode,
-    rootPath: this.rootPath,
-    dataPath: this.dataPath,
-    workerCount: this.workerCount,
-    isPrimaryProcess: this.isPrimaryProcess,
-    isWorkerProcess: this.isWorkerProcess,
-    multiProcessMode: this.multiProcessMode
-  };
+  private get info(): AppInfo {
+    return {
+      name: this.name,
+      version: this.version,
+      color: this.color,
+      mode: this.mode,
+      prodMode: this.prodMode,
+      devMode: this.devMode,
+      rootPath: this.rootPath,
+      dataPath: this.dataPath,
+      workerCount: this.workerCount,
+      isPrimaryProcess: this.isPrimaryProcess,
+      isWorkerProcess: this.isWorkerProcess,
+      multiProcessMode: this.multiProcessMode
+    };
+  }
 
   private onSig(): void {
     process.exit(0);
@@ -121,7 +123,7 @@ export class App {
     } = this;
     const config = await ConfigParser.parse({ schema: configSchema });
     const logger = Logger.create({
-      level: config.logs.level,
+      level: config.logger.level,
       files: isPrimaryProcess,
       dataPath
     });

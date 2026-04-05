@@ -5,6 +5,7 @@ import { Get, Post, RouteHandlerParams } from '@/delivery/http/route';
 import { AbstractRouter } from '@/delivery/http/router/abstract';
 import { Router } from '@/delivery/http/router/decorator';
 import { userSchema } from '@/domain/entity/User';
+import { InvalidDataError, TooManyRequestsError } from '@/domain/errors';
 
 @Router('/auth')
 export class AuthRouter extends AbstractRouter {
@@ -33,6 +34,36 @@ export class AuthRouter extends AbstractRouter {
     });
 
     return res.status(200).json({ user, accessToken, refreshToken });
+  }
+
+  public static registerBodySchema = z.object({
+    login: z
+      .string()
+      .min(3)
+      .max(32)
+      .regex(/^[a-zA-Z0-9_]+$/),
+    password: z.string().min(6).max(128),
+    name: z.string().min(1).max(64).optional().nullable()
+  });
+
+  @Post('/register', {
+    body: AuthRouter.registerBodySchema,
+    result: z.object({
+      user: userSchema,
+      accessToken: z.string(),
+      refreshToken: z.string()
+    }),
+    errors: [InvalidDataError, TooManyRequestsError]
+  })
+  @RateLimit({ windowMs: 60 * 60 * 1000, max: 5 })
+  public async register({
+    useCase,
+    res,
+    body: { login, password, name }
+  }: RouteHandlerParams<typeof AuthRouter.registerBodySchema>) {
+    const result = await useCase.auth.register({ login, password, name });
+
+    return res.status(201).json(result);
   }
 
   @Get('/user', {
@@ -65,43 +96,5 @@ export class AuthRouter extends AbstractRouter {
     const result = await useCase.auth.refreshTokens({ refreshToken });
 
     return res.status(200).json(result);
-  }
-
-  public static banBodySchema = z.object({
-    login: z.string().min(1)
-  });
-
-  @Post('/ban', {
-    body: AuthRouter.banBodySchema,
-    result: z.object({ success: z.boolean() })
-  })
-  @Auth({ required: true, adminOnly: true })
-  public async ban({
-    useCase,
-    res,
-    body: { login }
-  }: RouteHandlerParams<typeof AuthRouter.banBodySchema>) {
-    await useCase.user.ban({ login });
-
-    return res.status(200).json({ success: true });
-  }
-
-  public static unbanBodySchema = z.object({
-    login: z.string().min(1)
-  });
-
-  @Post('/unban', {
-    body: AuthRouter.unbanBodySchema,
-    result: z.object({ success: z.boolean() })
-  })
-  @Auth({ required: true, adminOnly: true })
-  public async unban({
-    useCase,
-    res,
-    body: { login }
-  }: RouteHandlerParams<typeof AuthRouter.unbanBodySchema>) {
-    await useCase.user.unban({ login });
-
-    return res.status(200).json({ success: true });
   }
 }

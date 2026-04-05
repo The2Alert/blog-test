@@ -17,7 +17,6 @@ import {
 
 export class DataGateway extends AbstractGateway {
   private readonly dataPath = this.appInfo.dataPath;
-
   private readonly fs = this.lib.fs;
 
   private resolvePath(filePath: string): string {
@@ -27,32 +26,29 @@ export class DataGateway extends AbstractGateway {
   public async ensureDirectory({
     path: dirPath
   }: EnsureDirectoryParams): Promise<void> {
-    const { fs } = this;
-    const fullPath = this.resolvePath(dirPath);
-
-    await fs.mkdir(fullPath, { recursive: true });
+    await this.fs.mkdir(this.resolvePath(dirPath), { recursive: true });
   }
 
   public async writeFile({
     path: filePath,
     content
   }: WriteFileParams): Promise<void> {
-    const { fs } = this;
     const fullPath = this.resolvePath(filePath);
-    const dir = path.dirname(fullPath);
 
-    await fs.mkdir(dir, { recursive: true });
-    await fs.writeFile(fullPath, content, 'utf-8');
+    await this.fs.mkdir(path.dirname(fullPath), { recursive: true });
+
+    if (Buffer.isBuffer(content)) {
+      await this.fs.writeFile(fullPath, content);
+    } else {
+      await this.fs.writeFile(fullPath, content, 'utf-8');
+    }
   }
 
   public async readFile({
     path: filePath
   }: ReadFileParams): Promise<ReadFileResult> {
-    const { fs } = this;
-    const fullPath = this.resolvePath(filePath);
-
     try {
-      const content = await fs.readFile(fullPath);
+      const content = await this.fs.readFile(this.resolvePath(filePath));
 
       return { content, exists: true };
     } catch {
@@ -61,19 +57,14 @@ export class DataGateway extends AbstractGateway {
   }
 
   public createReadStream({ path: filePath }: ReadFileStreamParams): Readable {
-    const fullPath = this.resolvePath(filePath);
-
-    return createReadStream(fullPath);
+    return createReadStream(this.resolvePath(filePath));
   }
 
   public async fileExists({
     path: filePath
   }: FileExistsParams): Promise<boolean> {
-    const { fs } = this;
-    const fullPath = this.resolvePath(filePath);
-
     try {
-      await fs.access(fullPath);
+      await this.fs.access(this.resolvePath(filePath));
 
       return true;
     } catch {
@@ -85,11 +76,8 @@ export class DataGateway extends AbstractGateway {
     path: dirPath,
     pattern
   }: ListFilesParams): Promise<string[]> {
-    const { fs } = this;
-    const fullPath = this.resolvePath(dirPath);
-
     try {
-      const files = await fs.readdir(fullPath);
+      const files = await this.fs.readdir(this.resolvePath(dirPath));
 
       if (pattern) {
         const regex = new RegExp(pattern);
@@ -106,11 +94,8 @@ export class DataGateway extends AbstractGateway {
   public async deleteFile({
     path: filePath
   }: DeleteFileParams): Promise<boolean> {
-    const { fs } = this;
-    const fullPath = this.resolvePath(filePath);
-
     try {
-      await fs.unlink(fullPath);
+      await this.fs.unlink(this.resolvePath(filePath));
 
       return true;
     } catch {
@@ -122,12 +107,11 @@ export class DataGateway extends AbstractGateway {
     oldPath,
     newPath
   }: RenameDirectoryParams): Promise<boolean> {
-    const { fs } = this;
-    const fullOldPath = this.resolvePath(oldPath);
-    const fullNewPath = this.resolvePath(newPath);
-
     try {
-      await fs.rename(fullOldPath, fullNewPath);
+      await this.fs.rename(
+        this.resolvePath(oldPath),
+        this.resolvePath(newPath)
+      );
 
       return true;
     } catch {
@@ -138,11 +122,11 @@ export class DataGateway extends AbstractGateway {
   public async deleteDirectory({
     path: dirPath
   }: DeleteDirectoryParams): Promise<boolean> {
-    const { fs } = this;
-    const fullPath = this.resolvePath(dirPath);
-
     try {
-      await fs.rm(fullPath, { recursive: true, force: true });
+      await this.fs.rm(this.resolvePath(dirPath), {
+        recursive: true,
+        force: true
+      });
 
       return true;
     } catch {

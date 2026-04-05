@@ -17,7 +17,7 @@ export function RateLimit({ windowMs, max }: RateLimitDecoratorParams) {
 
     const handler: RouteHandler = async function (params) {
       const { useCase, ip, req } = params;
-      const routeKey = `${req.method}:${req.path}`;
+      const routeKey = `${req.method}:${req.baseUrl}:${req.path}`;
       const resolvedIp = ip !== null ? ip : 'unknown';
 
       const { allowed } = await useCase.rateLimit.check({

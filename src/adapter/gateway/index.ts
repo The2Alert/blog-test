@@ -2,6 +2,8 @@ import { AuthGateway } from './Auth';
 import { CryptoGateway } from './Crypto';
 import { DataGateway } from './Data';
 import { ImageGateway } from './Image';
+import { PostGateway } from './Post';
+import { UserGateway } from './User';
 import { AbstractGateway } from './abstract';
 
 export class Gateway extends AbstractGateway {
@@ -9,4 +11,6 @@ export class Gateway extends AbstractGateway {
   public readonly crypto = new CryptoGateway(this.params);
   public readonly image = new ImageGateway(this.params);
   public readonly data = new DataGateway(this.params);
+  public readonly user = new UserGateway(this.params);
+  public readonly post = new PostGateway(this.params);
 }

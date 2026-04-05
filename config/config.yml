@@ -1,4 +1,4 @@
-logs:
+logger:
   level: debug
 
 http:

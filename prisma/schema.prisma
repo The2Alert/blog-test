@@ -19,36 +19,101 @@ enum FileType {
   IMAGE
 }
 
-model File {
-  id                        String                  @id @default(uuid())
-  status                    FileStatus              @default(CREATED)
-  type                      FileType                @default(UNKNOWN)
-  name                      String?
-  size                      Int
-  mimeType                  String
-  width                     Int                     @default(0)
-  height                    Int                     @default(0)
-  blurDataUrl               String?
-  path                      String?
-  usersAvatar128x128        User[]                  @relation(name: "userAvatar128x128")
-  createdAt                 DateTime                @default(now())
-}
-
 enum UserRole {
   USER
   ADMIN
 }
 
+enum PostUserRole {
+  EDITOR
+}
+
+model File {
+  id                    String      @id @default(uuid())
+  status                FileStatus  @default(CREATED)
+  type                  FileType    @default(UNKNOWN)
+  name                  String?
+  size                  Int
+  mimeType              String
+  width                 Int         @default(0)
+  height                Int         @default(0)
+  blurDataUrl           String?
+  path                  String?
+  usersAvatar128x128    User[]      @relation(name: "userAvatar128x128")
+  postsPreview1x1       Post[]      @relation(name: "postPreview1x1")
+  postsPreview4x3       Post[]      @relation(name: "postPreview4x3")
+  postsPreview16x9      Post[]      @relation(name: "postPreview16x9")
+  createdAt             DateTime    @default(now())
+}
+
 model User {
-  id                        Int                     @id @default(autoincrement())
-  role                      UserRole                @default(USER)
-  login                     String                  @unique
-  name                      String?
-  hashedPassword            String
-  avatar128x128Id           String?
-  avatar128x128             File?                   @relation(name: "userAvatar128x128", fields: [avatar128x128Id], references: [id], onDelete: SetNull)
-  banned                    Boolean                 @default(false)
-  createdAt                 DateTime                @default(now())
+  id                    Int         @id @default(autoincrement())
+  role                  UserRole    @default(USER)
+  login                 String      @unique
+  name                  String?
+  hashedPassword        String
+  avatar128x128Id       String?
+  avatar128x128         File?       @relation(name: "userAvatar128x128", fields: [avatar128x128Id], references: [id], onDelete: SetNull)
+  banned                Boolean     @default(false)
+  banReason             String?
+  posts                 PostUser[]
+  createdAt             DateTime    @default(now())
 
   @@index([login], type: Hash)
+}
+
+model Tag {
+  id                    Int         @id @default(autoincrement())
+  name                  String      @unique
+  posts                 PostTag[]
+  createdAt             DateTime    @default(now())
+
+  @@index([name], type: Hash)
+}
+
+model Post {
+  id                    Int         @id @default(autoincrement())
+  slug                  String?
+  title                 String
+  htmlTitle             String
+  description           String
+  htmlDescription       String
+  content               String
+  htmlContent           String
+  deleted               Boolean     @default(false)
+  preview1x1Id          String?
+  preview1x1            File?       @relation(name: "postPreview1x1", fields: [preview1x1Id], references: [id], onDelete: SetNull)
+  preview4x3Id          String?
+  preview4x3            File?       @relation(name: "postPreview4x3", fields: [preview4x3Id], references: [id], onDelete: SetNull)
+  preview16x9Id         String?
+  preview16x9           File?       @relation(name: "postPreview16x9", fields: [preview16x9Id], references: [id], onDelete: SetNull)
+  users                 PostUser[]
+  tags                  PostTag[]
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  @@index([slug], type: Hash)
+  @@index([deleted])
+}
+
+model PostUser {
+  postId                Int
+  userId                Int
+  role                  PostUserRole
+  post                  Post        @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user                  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt             DateTime    @default(now())
+
+  @@id([postId, userId])
+}
+
+model PostTag {
+  postId                Int
+  tagId                 Int
+  order                 Int
+  post                  Post        @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag                   Tag         @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+  @@index([order])
 }

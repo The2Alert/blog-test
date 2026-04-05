@@ -1,5 +1,6 @@
 import { AppUseCase } from './App';
 import { AuthUseCase } from './Auth';
+import { PostUseCase } from './Post';
 import { RateLimitUseCase } from './RateLimit';
 import { UserUseCase } from './User';
 import { AbstractUseCase } from './abstract';
@@ -14,4 +15,5 @@ export class UseCase extends AbstractUseCase {
   public readonly auth = new AuthUseCase(this.params);
   public readonly user = new UserUseCase(this.params);
   public readonly rateLimit = new RateLimitUseCase(this.params);
+  public readonly post = new PostUseCase(this.params);
 }

@@ -4,11 +4,12 @@ import { ServiceFunction } from '@/domain/service/types';
 
 export interface BanParams {
   login: string;
+  banReason?: string | null;
 }
 
 export const BanService: ServiceFunction<BanParams, void> = async (
   { repository },
-  { login }
+  { login, banReason = null }
 ) => {
   const user = await repository.user.get({
     where: { login }
@@ -30,6 +31,6 @@ export const BanService: ServiceFunction<BanParams, void> = async (
 
   await repository.user.update({
     where: { id: user.id },
-    data: { banned: true }
+    data: { banned: true, banReason }
   });
 };

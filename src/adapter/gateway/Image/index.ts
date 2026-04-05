@@ -17,34 +17,26 @@ export class ImageGateway extends AbstractGateway {
     height,
     fit = 'cover'
   }: ResizeImageParams): Promise<ResizeImageResult> {
-    const { sharp } = this;
-    const resizedBuffer = await sharp(buffer)
-      .resize({
-        width,
-        height,
-        fit
-      })
+    const resizedBuffer = await this.sharp(buffer)
+      .resize({ width, height, fit })
       .toBuffer();
-
-    const dimensions = await sharp(resizedBuffer).metadata();
+    const dimensions = await this.sharp(resizedBuffer).metadata();
 
     return {
       buffer: resizedBuffer,
-      width: dimensions.width || width,
-      height: dimensions.height || height
+      width: dimensions.width ?? width,
+      height: dimensions.height ?? height
     };
   }
 
   public async generateBlurDataUrl({
     buffer
   }: GenerateBlurDataUrlParams): Promise<GenerateBlurDataUrlResult> {
-    const { sharp } = this;
-    const resizedBuffer = await sharp(buffer)
+    const resizedBuffer = await this.sharp(buffer)
       .resize(8, 8, { fit: 'inside' })
+      .png()
       .toBuffer();
-
-    const base64 = resizedBuffer.toString('base64');
-    const blurDataUrl = `data:image/png;base64,${base64}`;
+    const blurDataUrl = `data:image/png;base64,${resizedBuffer.toString('base64')}`;
 
     return { blurDataUrl };
   }
@@ -52,12 +44,8 @@ export class ImageGateway extends AbstractGateway {
   public async getImageDimensions({
     buffer
   }: GetImageDimensionsParams): Promise<GetImageDimensionsResult> {
-    const { sharp } = this;
-    const metadata = await sharp(buffer).metadata();
+    const metadata = await this.sharp(buffer).metadata();
 
-    return {
-      width: metadata.width || 0,
-      height: metadata.height || 0
-    };
+    return { width: metadata.width ?? 0, height: metadata.height ?? 0 };
   }
 }

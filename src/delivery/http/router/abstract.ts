@@ -18,6 +18,7 @@ export abstract class AbstractRouter {
   protected readonly httpLogger: Logger;
 
   declare public readonly path: string;
+  declare public readonly routerName: string;
   declare public routes: RouteMethod[];
 
   public readonly children: AbstractRouter[] = [];
@@ -48,7 +49,9 @@ export abstract class AbstractRouter {
         return {
           method: routeMethod.method,
           fullPath: fullRouterPath + routePath,
-          schema: routeMethod.schema
+          schema: routeMethod.schema,
+          errors: routeMethod.errors,
+          routerName: this.routerName
         };
       }
     );
@@ -63,16 +66,14 @@ export abstract class AbstractRouter {
   }
 
   public registerRoutes(parentRouter: ExpressRouter): void {
-    const { router } = this;
-
     for (const { method, path, handlers, handler } of this.routes) {
-      router[method](path, ...handlers, handler.bind(this));
+      this.router[method](path, ...handlers, handler.bind(this));
     }
 
-    parentRouter.use(this.path, router);
+    parentRouter.use(this.path, this.router);
 
     for (const childRouter of this.children) {
-      childRouter.registerRoutes(router);
+      childRouter.registerRoutes(this.router);
     }
   }
 }

@@ -21,7 +21,8 @@ export const userBasicSelect: Prisma.UserSelect = {
 export const userFullSelect: Prisma.UserSelect = {
   ...userBasicSelect,
   hashedPassword: true,
-  banned: true
+  banned: true,
+  banReason: true
 };
 
 export class UserRepository extends PrismaRepository<

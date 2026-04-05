@@ -4,6 +4,7 @@ import fs from 'fs/promises';
 import jwt from 'jsonwebtoken';
 import path from 'path';
 import sharp from 'sharp';
+import { MarkdownLib } from './utils/Markdown';
 
 export class Lib {
   public static create(): Lib {
@@ -16,4 +17,5 @@ export class Lib {
   public readonly crypto = crypto;
   public readonly bcrypt = bcrypt;
   public readonly sharp = sharp;
+  public readonly markdown = new MarkdownLib();
 }

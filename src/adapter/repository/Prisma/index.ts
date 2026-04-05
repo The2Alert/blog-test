@@ -224,4 +224,15 @@ export abstract class PrismaRepository<
       include: this.getInclude(include)
     })) as Model;
   }
+
+  public $transaction<T>(
+    callback: (tx: PrismaTx) => Promise<T>,
+    tx?: PrismaTx
+  ): Promise<T> {
+    if (tx) {
+      return callback(tx);
+    }
+
+    return this.params.clients.prisma.$transaction(callback);
+  }
 }
