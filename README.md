@@ -76,6 +76,67 @@ DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}
 
 ---
 
+## 🏛️ Architecture
+
+The project is built on **Clean Architecture** with **Domain-Driven Design** principles. The goal is a strict separation of concerns: business rules are completely isolated from infrastructure, frameworks, and delivery mechanisms. Each layer can only depend on layers below it — never upward.
+
+```
+src/
+├── lib/                   # Zero-dependency utilities (bcrypt, jwt, sharp, markdown)
+├── config/                # Config schema + YAML parser
+├── domain/
+│   ├── errors/            # Domain error classes with HTTP status and schema
+│   ├── entity/            # Domain models (types + Zod schemas)
+│   ├── service/           # Pure business logic functions
+│   └── usecase/           # Application use cases — orchestrate services
+├── adapter/
+│   ├── gateway/           # Side-effect abstractions (Image, Data, Auth, Crypto)
+│   └── repository/        # Database access (Prisma, Redis)
+└── delivery/
+    └── http/              # Express routers, route decorators, middleware
+```
+
+### Layer Breakdown
+
+**`lib/`** — stateless, framework-free utility wrappers. `Lib` is a single injectable class that holds instances of `bcrypt`, `jwt`, `sharp`, `crypto`, `fs`, and the `MarkdownLib` wrapper. Nothing here knows about the domain.
+
+**`domain/entity/`** — pure TypeScript interfaces that mirror Prisma models plus Zod schemas for validation and OpenAPI generation. Entities are defined once and referenced everywhere: `userSchema`, `postSchema`, `tagSchema`, `fileSchema`, `postUserSchema`, `postTagSchema`. `@prisma/client` types are imported only here and in repositories, nowhere else.
+
+**`domain/errors/`** — all domain error classes live here (`NotFoundError`, `ForbiddenError`, `UnauthorizedError`, `InvalidDataError`, etc.). Each class carries a `static httpStatus` and a `static getSchema()` method that returns a Zod schema for OpenAPI documentation. The `BaseError` base class provides a consistent error shape across the entire API.
+
+**`domain/service/`** — stateless functions that contain pure business rules. A service function receives `AbstractServiceParams` (the full dependency container) as the first argument and its own typed params as the second. Services do not know about HTTP, Prisma, or Redis — they interact only through gateway and repository abstractions. Examples: `RegisterService`, `CheckCredentialsService`, `SavePreviewService`.
+
+**`domain/usecase/`** — application-level orchestration. A use case composes one or more services to fulfil a single user-facing operation. Use cases are the only entry point called from the delivery layer. Examples: `CreatePostUseCase` (renders Markdown, creates post, links editor, upserts tags, saves preview); `RegisterUseCase` (registers user, immediately issues tokens).
+
+**`adapter/gateway/`** — abstractions over side-effecting infrastructure:
+- `ImageGateway` — Sharp-based image processing (avatar 128×128, post previews in three ratios).
+- `DataGateway` — local filesystem operations (read, write, stream, delete files under `data/`).
+- `AuthGateway` — JWT signing and verification.
+- `CryptoGateway` — bcrypt hashing and comparison.
+
+**`adapter/repository/`** — data access. Each repository extends the generic `PrismaRepository<Model, ModelName, SelectKey>` which wraps `findFirst`, `findMany`, `create`, `update`, `upsert`, `delete` with typed select maps (`'default' | 'basic' | 'full' | 'list'`). `@prisma/client` is only imported inside this layer. `RateLimitRepository` wraps Redis with a sliding-window increment operation.
+
+**`delivery/http/`** — Express-based delivery. Routes are defined declaratively via method decorators (`@Get`, `@Post`, `@Put`, `@Delete`) that attach Zod schemas for body, query, params, and result, plus an optional `errors` array for Swagger. Two additional decorators compose onto handlers: `@Auth` for JWT verification and `@RateLimit` for Redis-backed throttling. The `ApiRouter` collects all route metadata from child routers and builds the full OpenAPI 3.1 document at startup, registering it under `/api/v1/docs` via Swagger UI.
+
+### Dependency Flow
+
+```
+delivery → usecase → service → gateway / repository → lib / prisma / redis
+```
+
+No layer imports from a layer above it. `@prisma/client` never appears outside `domain/entity` and `adapter/repository`. Business logic never appears inside routers.
+
+### Domain-Driven Design Concepts Applied
+
+- **Entities** — `User`, `Post`, `Tag`, `File` are the core domain objects with identity and lifecycle.
+- **Value Objects** — `PostUserRole` (EDITOR), `FileStatus`, `FileType`, `PreviewRatio` represent constrained domain values without independent identity.
+- **Aggregates** — `Post` is the aggregate root for `PostUser` (editors) and `PostTag` (ordered tags). Operations on these relations always go through the post's use cases, never directly from the delivery layer.
+- **Repositories** — one repository per aggregate root, accessed only from the domain layer.
+- **Services** — stateless domain operations that don't naturally belong to a single entity (`CheckCredentialsService`, `GenerateTokensService`).
+- **Use Cases (Application Services)** — coordinate domain services and repositories to fulfil a single user intent. Each use case maps 1-to-1 to an API action.
+
+---
+
 ## ✨ Additional Capabilities
 
 ### Markdown → HTML
