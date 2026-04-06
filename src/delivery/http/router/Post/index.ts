@@ -1,6 +1,6 @@
 import { RequestHandler } from 'express';
 import multer from 'multer';
-import { z } from 'zod';
+import { ZodObject, ZodRawShape, z } from 'zod';
 import { Auth } from '@/delivery/http/auth';
 import { RateLimit } from '@/delivery/http/rate';
 import {
@@ -161,7 +161,7 @@ export class PostRouter extends AbstractRouter {
     userId,
     params: { postId }
   }: RouteHandlerParams<
-    typeof PostRouter.updateBodySchema,
+    ZodObject<ZodRawShape>,
     typeof PostRouter.deleteParamsSchema
   >) {
     await useCase.post.delete({ postId, userId });
@@ -208,7 +208,7 @@ export class PostRouter extends AbstractRouter {
     res,
     params: { idOrSlug }
   }: RouteHandlerParams<
-    typeof PostRouter.updateBodySchema,
+    ZodObject<ZodRawShape>,
     typeof PostRouter.getParamsSchema
   >) {
     const { post } = await useCase.post.getByIdOrSlug({ idOrSlug });
@@ -231,7 +231,7 @@ export class PostRouter extends AbstractRouter {
     res,
     params: { postId, ratio }
   }: RouteHandlerParams<
-    typeof PostRouter.updateBodySchema,
+    ZodObject<ZodRawShape>,
     typeof PostRouter.previewParamsSchema
   >) {
     const { stream, mimeType } = await useCase.post.readPreview({
