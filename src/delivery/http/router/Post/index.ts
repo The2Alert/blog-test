@@ -40,7 +40,7 @@ export class PostRouter extends AbstractRouter {
 
       return value;
     },
-    z.array(z.string().min(1).max(64)).optional()
+    z.array(z.string().max(64)).optional()
   );
 
   public static slugSchema = z.string().max(200).optional().nullable();
@@ -50,7 +50,7 @@ export class PostRouter extends AbstractRouter {
     description: z.string().min(1).max(2000),
     content: z.string().min(1),
     slug: PostRouter.slugSchema,
-    tags: PostRouter.tagsPreprocess,
+    tags: PostRouter.tagsPreprocess.optional(),
     preview: z.custom().meta({ type: 'string', format: 'binary' }).optional()
   });
 
@@ -98,7 +98,7 @@ export class PostRouter extends AbstractRouter {
     description: z.string().max(2000).optional(),
     content: z.string().optional(),
     slug: PostRouter.slugSchema,
-    tags: PostRouter.tagsPreprocess,
+    tags: PostRouter.tagsPreprocess.optional(),
     preview: z.custom().meta({ type: 'string', format: 'binary' }).optional()
   });
 
